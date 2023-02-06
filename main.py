@@ -6,6 +6,8 @@ import traceback
 from datetime import datetime, timedelta
 from signal import SIGINT
 
+import click
+
 
 def add_seconds(time):
     return str(datetime.fromisoformat(time)).replace(' ', 'T').split('.')[0]
@@ -140,7 +142,7 @@ def print_command(command):
     print(' '.join(command))
 
 
-def main(name, sleep, stream_process, search_processes, log):
+def iterate(name, sleep, stream_process, search_processes, log):
     with open(name + '.json') as query_file:
         query = convert_from_json(json.load(query_file))
 
@@ -158,42 +160,37 @@ def main(name, sleep, stream_process, search_processes, log):
     return search_processes, log
 
 
-usage = """Usage: python3 main.py path [sleep]
+@click.command()
+@click.option(
+    '--sleep', default=60,
+    help='Seconds to sleep between each step of reading the configuration.'
+)
+@click.argument('path')
+def main(sleep, path):
+    name = path.split('.json')[0]
+    stream_process = {
+        'keywords': set(),
+        'start-time': None,
+        'number': 0,
+        'process': None
+    }
+    search_processes = 0
+    log = []
+    try:
+        while (True):
+            search_processes, log = iterate(
+                name, sleep, stream_process, search_processes, log
+            )
+    except KeyboardInterrupt:
+        if stream_process['process'] is not None:
+            print('Killing the stream...')
+            stream_process['process'].send_signal(SIGINT)
+    except Exception:
+        traceback.print_exc()
+        if stream_process['process'] is not None:
+            print('Killing the stream...')
+            stream_process['process'].send_signal(SIGINT)
 
-path:  Path to json with configuracion.
-sleep: Time sleep between each step of reading the configuration in seconds.
-       Defaults to 60."""
 
-if len(sys.argv) == 2:
-    path = sys.argv[1]
-    sleep = 60
-elif len(sys.argv) == 3:
-    path = sys.argv[1]
-    sleep = int(sys.argv[2])
-else:
-    print(usage)
-    exit(0)
-name = path.split('.json')[0]
-stream_process = {
-    'keywords': set(),
-    'start-time': None,
-    'number': 0,
-    'process': None
-}
-search_processes = 0
-log = []
-
-try:
-    while (True):
-        search_processes, log = main(
-            name, sleep, stream_process, search_processes, log
-        )
-except KeyboardInterrupt:
-    if stream_process['process'] is not None:
-        print('Killing the stream...')
-        stream_process['process'].send_signal(SIGINT)
-except Exception:
-    traceback.print_exc()
-    if stream_process['process'] is not None:
-        print('Killing the stream...')
-        stream_process['process'].send_signal(SIGINT)
+if __name__ == '__main__':
+    main()

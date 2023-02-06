@@ -91,7 +91,9 @@ def iterate(name, sleep, stream_process, search_processes, log):
     query, log = get_standardized_queries(query, log)
     for query_window, log_window in zip(query, log):
         if len(query_window['keywords']) > 0:
-            search_processes = search(query_window, name, search_processes)
+            search_processes = search(
+                query_window, log_window['keywords'], name, search_processes
+            )
             log_window['keywords'] |= query_window['keywords']
 
     time.sleep(sleep)
@@ -139,9 +141,13 @@ def read_log(name):
     return log, stream_process, search_processes
 
 
-def search(window, name, search_processes):
+def search(window, negative_keywords, name, search_processes):
     search_processes += 1
-    query = '"(' + ') OR ('.join(window['keywords']) + ')"'
+    query = '(' + ') OR ('.join(window['keywords']) + ')'
+    if len(negative_keywords) > 0:
+        negative_query = '(' + ') OR ('.join(negative_keywords) + ')'
+        query = '(' + query + ') AND NOT (' + negative_query + ')'
+    query = '"' + query + '"'
     command = [
         'twarc2', 'search', '--hide-progress', '--archive',
         query, name + '-search-' + str(search_processes) + '.jsonl',

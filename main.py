@@ -80,6 +80,24 @@ def is_inside(inner_window, outer_window):
     return True
 
 
+def iterate(name, sleep, stream_process, search_processes, log):
+    with open(name + '.json') as query_file:
+        query = convert_from_json(json.load(query_file))
+
+    now_keywords = get_now_keywords(query)
+    if now_keywords != stream_process['keywords']:
+        log = stream(now_keywords, name, stream_process, log)
+
+    query, log = get_standardized_queries(query, log)
+    for query_window, log_window in zip(query, log):
+        if len(query_window['keywords']) > 0:
+            search_processes = search(query_window, name, search_processes)
+            log_window['keywords'] |= query_window['keywords']
+
+    time.sleep(sleep)
+    return search_processes, log
+
+
 def kill_stream(stream_process, log):
     stream_process['end-time'] = now()
     if len(stream_process['keywords']) > 0:
@@ -94,6 +112,31 @@ def kill_stream(stream_process, log):
 
 def now():
     return str(datetime.utcnow()).replace(' ', 'T').split('.')[0]
+
+
+def print_command(command):
+    print(' '.join(command))
+
+
+def read_log(name):
+    if isfile(name + '-log.json'):
+        with open(name + '-log.json') as f:
+            log = json.load(f)
+    else:
+        log = {
+            'stream_processes': 0,
+            'search_processes': 0,
+            'log': []
+        }
+    stream_process = {
+        'keywords': set(),
+        'start-time': None,
+        'number': log['stream_processes'],
+        'process': None
+    }
+    search_processes = log['search_processes']
+    log = convert_from_json(log['log'])
+    return log, stream_process, search_processes
 
 
 def search(window, name, search_processes):
@@ -142,31 +185,6 @@ def stream(keywords, name, stream_process, log):
     return log
 
 
-def print_command(command):
-    print(' '.join(command))
-
-
-def read_log(name):
-    if isfile(name + '-log.json'):
-        with open(name + '-log.json') as f:
-            log = json.load(f)
-    else:
-        log = {
-            'stream_processes': 0,
-            'search_processes': 0,
-            'log': []
-        }
-    stream_process = {
-        'keywords': set(),
-        'start-time': None,
-        'number': log['stream_processes'],
-        'process': None
-    }
-    search_processes = log['search_processes']
-    log = convert_from_json(log['log'])
-    return log, stream_process, search_processes
-
-
 def write_log(name, log, stream_processes, search_processes):
     with open(name + '-log.json', 'w') as f:
         json.dump({
@@ -180,24 +198,6 @@ def write_log(name, log, stream_processes, search_processes):
                 } for window in log
             ]
         }, f)
-
-
-def iterate(name, sleep, stream_process, search_processes, log):
-    with open(name + '.json') as query_file:
-        query = convert_from_json(json.load(query_file))
-
-    now_keywords = get_now_keywords(query)
-    if now_keywords != stream_process['keywords']:
-        log = stream(now_keywords, name, stream_process, log)
-
-    query, log = get_standardized_queries(query, log)
-    for query_window, log_window in zip(query, log):
-        if len(query_window['keywords']) > 0:
-            search_processes = search(query_window, name, search_processes)
-            log_window['keywords'] |= query_window['keywords']
-
-    time.sleep(sleep)
-    return search_processes, log
 
 
 @click.command()

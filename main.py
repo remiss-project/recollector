@@ -177,7 +177,7 @@ def main(sleep, path):
     search_processes = 0
     log = []
     try:
-        while (True):
+        while True:
             search_processes, log = iterate(
                 name, sleep, stream_process, search_processes, log
             )

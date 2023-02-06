@@ -73,7 +73,7 @@ Això inclou:
 
 Si voleu que el fitxer es rellegeixi cada, per exemple, 30 segons, feu:
 ```
-python3 main.py config.json 30
+python3 main.py config.json --sleep 30
 ```
 
 Per aturar l'execució, podeu fer CTRL+C.

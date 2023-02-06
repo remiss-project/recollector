@@ -163,7 +163,10 @@ def iterate(name, sleep, stream_process, search_processes, log):
 @click.command()
 @click.option(
     '--sleep', default=60,
-    help='Seconds to sleep between each step of reading the configuration.'
+    help='''
+        Seconds to sleep between each step of reading the configuration.
+        Defaults to 60.
+    '''
 )
 @click.argument('path')
 def main(sleep, path):

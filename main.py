@@ -3,6 +3,7 @@ import subprocess
 import time
 import traceback
 from datetime import datetime, timedelta
+from os.path import isfile
 from signal import SIGINT
 
 import click
@@ -79,6 +80,18 @@ def is_inside(inner_window, outer_window):
     return True
 
 
+def kill_stream(stream_process, log):
+    stream_process['end-time'] = now()
+    if len(stream_process['keywords']) > 0:
+        print('Killing old stream...')
+        stream_process['process'].send_signal(SIGINT)
+    else:
+        stream_process['start-time'] = stream_process['end-time']
+    del stream_process['process']
+    del stream_process['number']
+    return log + [stream_process]
+
+
 def now():
     return str(datetime.utcnow()).replace(' ', 'T').split('.')[0]
 
@@ -125,20 +138,48 @@ def stream(keywords, name, stream_process, log):
     else:
         stream_process['process'] = None
         stream_process['start-time'] = None
-
-    old_stream_process['end-time'] = now()
-    if len(old_stream_process['keywords']) > 0:
-        print('Killing old stream...')
-        old_stream_process['process'].send_signal(SIGINT)
-    else:
-        old_stream_process['start-time'] = old_stream_process['end-time']
-    del old_stream_process['process']
-    del old_stream_process['number']
-    log += [old_stream_process]
+    log = kill_stream(old_stream_process, log)
+    return log
 
 
 def print_command(command):
     print(' '.join(command))
+
+
+def read_log(name):
+    if isfile(name + '-log.json'):
+        with open(name + '-log.json') as f:
+            log = json.load(f)
+    else:
+        log = {
+            'stream_processes': 0,
+            'search_processes': 0,
+            'log': []
+        }
+    stream_process = {
+        'keywords': set(),
+        'start-time': None,
+        'number': log['stream_processes'],
+        'process': None
+    }
+    search_processes = log['search_processes']
+    log = convert_from_json(log['log'])
+    return log, stream_process, search_processes
+
+
+def write_log(name, log, stream_processes, search_processes):
+    with open(name + '-log.json', 'w') as f:
+        json.dump({
+            'stream_processes': stream_processes,
+            'search_processes': search_processes,
+            'log': [
+                {
+                    'start-time': window['start-time'],
+                    'end-time': window['end-time'],
+                    'keywords': list(window['keywords'])
+                } for window in log
+            ]
+        }, f)
 
 
 def iterate(name, sleep, stream_process, search_processes, log):
@@ -147,7 +188,7 @@ def iterate(name, sleep, stream_process, search_processes, log):
 
     now_keywords = get_now_keywords(query)
     if now_keywords != stream_process['keywords']:
-        stream(now_keywords, name, stream_process, log)
+        log = stream(now_keywords, name, stream_process, log)
 
     query, log = get_standardized_queries(query, log)
     for query_window, log_window in zip(query, log):
@@ -170,28 +211,19 @@ def iterate(name, sleep, stream_process, search_processes, log):
 @click.argument('path')
 def main(sleep, path):
     name = path.split('.json')[0]
-    stream_process = {
-        'keywords': set(),
-        'start-time': None,
-        'number': 0,
-        'process': None
-    }
-    search_processes = 0
-    log = []
+    log, stream_process, search_processes = read_log(name)
     try:
         while True:
             search_processes, log = iterate(
                 name, sleep, stream_process, search_processes, log
             )
     except KeyboardInterrupt:
-        if stream_process['process'] is not None:
-            print('Killing the stream...')
-            stream_process['process'].send_signal(SIGINT)
+        log = kill_stream(stream_process.copy(), log)
+        write_log(name, log, stream_process['number'], search_processes)
     except Exception:
         traceback.print_exc()
-        if stream_process['process'] is not None:
-            print('Killing the stream...')
-            stream_process['process'].send_signal(SIGINT)
+        log = kill_stream(stream_process.copy(), log)
+        write_log(name, log, stream_process['number'], search_processes)
 
 
 if __name__ == '__main__':

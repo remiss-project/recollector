@@ -149,9 +149,9 @@ def search(window, negative_keywords, outfile, search_processes):
         query = '(' + query + ') AND NOT (' + negative_query + ')'
     query = '"' + query + '"'
     command = [
-        'twarc2', 'search', '--hide-progress', '--archive',
-        query, outfile + 'search-' + str(search_processes) + '.jsonl',
-        '--start-time', window['start-time'], '--end-time', window['end-time']
+        'twarc2', 'search', '--archive',
+        '--start-time', window['start-time'], '--end-time', window['end-time'],
+        query, outfile + 'search-' + str(search_processes) + '.jsonl'
     ]
     end_time = datetime.fromisoformat(window['end-time'])
     wait_until = end_time + timedelta(seconds=10)

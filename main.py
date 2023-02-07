@@ -86,7 +86,7 @@ def iterate(infile, outfile, sleep, stream_process, search_processes, log):
 
     now_keywords = get_now_keywords(query)
     if now_keywords != stream_process['keywords']:
-        log = stream(now_keywords, outfile, stream_process, log)
+        log = stream(now_keywords, stream_process, log)
 
     query, log = get_standardized_queries(query, log)
     for query_window, log_window in zip(query, log):
@@ -163,36 +163,31 @@ def search(window, negative_keywords, outfile, search_processes):
     return search_processes
 
 
-def stream(keywords, outfile, stream_process, log):
+def stream(keywords, stream_process, log):
     old_stream_process = stream_process.copy()
+    old_stream_process['end-time'] = now()
+    if old_stream_process['start-time'] is None:
+        old_stream_process['start-time'] = old_stream_process['end-time']
+    del old_stream_process['process']
+    del old_stream_process['number']
+    log += [old_stream_process]
 
-    stream_process['keywords'] = keywords
-    if len(keywords) > 0:
-        stream_process['number'] += 1
-        logfile = 'stream-' + str(stream_process['number']) + '.log'
-        command = ['twarc2', 'stream-rules', 'delete-all']
+    logfile = 'stream-' + str(stream_process['number']) + '.log'
+    new_keywords = keywords - old_stream_process['keywords']
+    old_keywords = old_stream_process['keywords'] - keywords
+    for keyword in new_keywords:
+        command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
         print_command(command)
         with open(logfile, 'a') as f:
             subprocess.run(command, stdout=f, stderr=f)
-        for keyword in keywords:
-            command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
-            print_command(command)
-            with open(logfile, 'a') as f:
-                subprocess.run(command, stdout=f, stderr=f)
-        command = [
-            'twarc2', 'stream',
-            outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
-        ]
+    for keyword in old_keywords:
+        command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
         print_command(command)
         with open(logfile, 'a') as f:
-            stream_process['process'] = subprocess.Popen(
-                command, stdout=f, stderr=f
-            )
-        stream_process['start-time'] = now()
-    else:
-        stream_process['process'] = None
-        stream_process['start-time'] = None
-    log = kill_stream(old_stream_process, log)
+            subprocess.run(command, stdout=f, stderr=f)
+
+    stream_process['start-time'] = now()
+    stream_process['keywords'] = keywords
     return log
 
 
@@ -223,7 +218,24 @@ def write_log(log, stream_processes, search_processes):
 @click.argument('outfile')
 def main(sleep, infile, outfile):
     log, stream_process, search_processes = read_log()
+
+    stream_process['number'] += 1
+    logfile = 'stream-' + str(stream_process['number']) + '.log'
+    command = ['twarc2', 'stream-rules', 'delete-all']
+    print_command(command)
+    with open(logfile, 'a') as f:
+        subprocess.run(command, stdout=f, stderr=f)
+
     try:
+        command = [
+            'twarc2', 'stream',
+            outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
+        ]
+        print_command(command)
+        with open(logfile, 'a') as f:
+            stream_process['process'] = subprocess.Popen(
+                command, stdout=f, stderr=f
+            )
         while True:
             search_processes, log = iterate(
                 infile, outfile, sleep, stream_process, search_processes, log

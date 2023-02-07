@@ -62,16 +62,15 @@ Cada minut es rellegirà el fitxer i s'aplicaran els canvis que calgui.
 Això inclou:
 - Que la finestra temporal que conté el moment actual arribi a la seva fi,
   o que s'hagi eliminat del fitxer.
-  En aquest cas, s'aturarà la consulta Stream.
+  En aquest cas, s'eliminaran tots els mots clau la consulta Stream.
 - Que s'arribi a una nova finestra temporal.
-  En aquest cas, s'iniciarà la nova consulta Stream.
+  En aquest cas, se n'afegiran els mots clau a la consulta Stream.
 - Que s'afegeixi una nova finestra temporal del passat,
   o s'afegeixi un mot clau a una que ja existeix.
   En aquest cas, s'iniciarà una nova consulta Search amb els mots nous.
 - Que s'afegeixi una nova finestra temporal que contingui el moment actual,
   o que s'afegeixi un mot clau a la que ja existeix.
-  En aquest cas, s'iniciarà una nova consulta Stream amb tots els mots claus
-  i s'aturarà la que hi hagi,
+  En aquest cas, s'afegiran els nous mots clau a la consulta Stream
   i s'iniciarà una nova consulta Search amb els mots claus nous i amb temps final el moment actual.
 
 Si voleu que el fitxer es rellegeixi cada, per exemple, 30 segons, feu:

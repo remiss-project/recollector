@@ -73,6 +73,11 @@ Això inclou:
   En aquest cas, s'afegiran els nous mots clau a la consulta Stream
   i s'iniciarà una nova consulta Search amb els mots claus nous i amb temps final el moment actual.
 
+Per tal d'evitar descarregar dos cops el mateix tweet,
+quan s'afegeix un mot clau nou a una finestra ja existent,
+la consulta no demana senzillament els tweets amb el nou mot clau,
+sinó els tweets amb el nou mot clau que no contingui cap mot clau que ja haguéssim demanat.
+
 Si voleu que el fitxer es rellegeixi cada, per exemple, 30 segons, feu:
 ```
 python3 main.py config.json results_ --sleep 30

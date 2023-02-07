@@ -137,7 +137,9 @@ def read_log():
     return log, stream_process, search_processes
 
 
-def run(command, outfile):
+def run(command, outfile, time=False):
+    if time:
+        print(now(), end=' ')
     print(' '.join(command))
     with open(outfile, 'a') as f:
         process = subprocess.Popen(command, stdout=f, stderr=f)
@@ -172,7 +174,7 @@ def stream(keywords, stream_process, log):
 
     for keyword in new_keywords:
         command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
-        run(command, logfile)
+        run(command, logfile, time=True)
 
     stream_process['start-time'] = now()
     stream_process['keywords'] = keywords
@@ -185,7 +187,7 @@ def stream(keywords, stream_process, log):
 
     for keyword in old_keywords:
         command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
-        run(command, logfile)
+        run(command, logfile, time=True)
 
     return log + [old_stream_process]
 

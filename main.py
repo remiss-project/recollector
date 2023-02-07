@@ -116,10 +116,6 @@ def now():
     return str(datetime.utcnow()).replace(' ', 'T').split('.')[0]
 
 
-def print_command(command):
-    print(' '.join(command))
-
-
 def read_log():
     if isfile('log.json'):
         with open('log.json') as f:
@@ -141,6 +137,13 @@ def read_log():
     return log, stream_process, search_processes
 
 
+def run(command, outfile):
+    print(' '.join(command))
+    with open(outfile, 'a') as f:
+        process = subprocess.Popen(command, stdout=f, stderr=f)
+    return process
+
+
 def search(window, negative_keywords, outfile, search_processes):
     search_processes += 1
     query = ' OR '.join(window['keywords'])
@@ -157,9 +160,7 @@ def search(window, negative_keywords, outfile, search_processes):
     wait_until = end_time + timedelta(seconds=10)
     if wait_until > datetime.utcnow():
         time.sleep((wait_until - datetime.utcnow()).seconds + 1)
-    print_command(command)
-    with open('search-' + str(search_processes) + '.log', 'a') as f:
-        subprocess.Popen(command, stdout=f, stderr=f)
+    run(command, 'search-' + str(search_processes) + '.log')
     return search_processes
 
 
@@ -171,9 +172,7 @@ def stream(keywords, stream_process, log):
 
     for keyword in new_keywords:
         command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
-        print_command(command)
-        with open(logfile, 'a') as f:
-            subprocess.run(command, stdout=f, stderr=f)
+        run(command, logfile)
 
     stream_process['start-time'] = now()
     stream_process['keywords'] = keywords
@@ -186,9 +185,7 @@ def stream(keywords, stream_process, log):
 
     for keyword in old_keywords:
         command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
-        print_command(command)
-        with open(logfile, 'a') as f:
-            subprocess.run(command, stdout=f, stderr=f)
+        run(command, logfile)
 
     return log + [old_stream_process]
 
@@ -223,21 +220,14 @@ def main(sleep, infile, outfile):
 
     stream_process['number'] += 1
     logfile = 'stream-' + str(stream_process['number']) + '.log'
-    command = ['twarc2', 'stream-rules', 'delete-all']
-    print_command(command)
-    with open(logfile, 'a') as f:
-        subprocess.run(command, stdout=f, stderr=f)
+    run(['twarc2', 'stream-rules', 'delete-all'], logfile)
 
     try:
         command = [
             'twarc2', 'stream',
             outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
         ]
-        print_command(command)
-        with open(logfile, 'a') as f:
-            stream_process['process'] = subprocess.Popen(
-                command, stdout=f, stderr=f
-            )
+        stream_process['process'] = run(command, logfile)
         while True:
             search_processes, log = iterate(
                 infile, outfile, sleep, stream_process, search_processes, log

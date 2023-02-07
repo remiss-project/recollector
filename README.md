@@ -47,8 +47,11 @@ Cada finestra temporal ha de tenir tres atributs:
 
 Per començar a descarregar tweets, feu:
 ```
-python3 main.py config.json
+python3 main.py config.json results_
 ```
+
+Els tweets es desaran en fitxers anomenats `results_search-n.jsonl` o
+`results_stream-n.jsonl`.
 
 Les finestres temporals del passat es traduiran a una consulta Search.
 Les finestres temporals que continguin el moment actual es convertiran a una consulta Stream
@@ -73,7 +76,7 @@ Això inclou:
 
 Si voleu que el fitxer es rellegeixi cada, per exemple, 30 segons, feu:
 ```
-python3 main.py config.json --sleep 30
+python3 main.py config.json results_ --sleep 30
 ```
 
 Per aturar l'execució, podeu fer CTRL+C.

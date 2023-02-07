@@ -80,19 +80,19 @@ def is_inside(inner_window, outer_window):
     return True
 
 
-def iterate(name, sleep, stream_process, search_processes, log):
-    with open(name + '.json') as query_file:
+def iterate(infile, outfile, sleep, stream_process, search_processes, log):
+    with open(infile) as query_file:
         query = convert_from_json(json.load(query_file))
 
     now_keywords = get_now_keywords(query)
     if now_keywords != stream_process['keywords']:
-        log = stream(now_keywords, name, stream_process, log)
+        log = stream(now_keywords, outfile, stream_process, log)
 
     query, log = get_standardized_queries(query, log)
     for query_window, log_window in zip(query, log):
         if len(query_window['keywords']) > 0:
             search_processes = search(
-                query_window, log_window['keywords'], name, search_processes
+                query_window, log_window['keywords'], outfile, search_processes
             )
             log_window['keywords'] |= query_window['keywords']
 
@@ -120,9 +120,9 @@ def print_command(command):
     print(' '.join(command))
 
 
-def read_log(name):
-    if isfile(name + '-log.json'):
-        with open(name + '-log.json') as f:
+def read_log():
+    if isfile('log.json'):
+        with open('log.json') as f:
             log = json.load(f)
     else:
         log = {
@@ -141,7 +141,7 @@ def read_log(name):
     return log, stream_process, search_processes
 
 
-def search(window, negative_keywords, name, search_processes):
+def search(window, negative_keywords, outfile, search_processes):
     search_processes += 1
     query = '(' + ') OR ('.join(window['keywords']) + ')'
     if len(negative_keywords) > 0:
@@ -150,7 +150,7 @@ def search(window, negative_keywords, name, search_processes):
     query = '"' + query + '"'
     command = [
         'twarc2', 'search', '--hide-progress', '--archive',
-        query, name + '-search-' + str(search_processes) + '.jsonl',
+        query, outfile + 'search-' + str(search_processes) + '.jsonl',
         '--start-time', window['start-time'], '--end-time', window['end-time']
     ]
     end_time = datetime.fromisoformat(window['end-time'])
@@ -162,7 +162,7 @@ def search(window, negative_keywords, name, search_processes):
     return search_processes
 
 
-def stream(keywords, name, stream_process, log):
+def stream(keywords, outfile, stream_process, log):
     old_stream_process = stream_process.copy()
 
     stream_process['keywords'] = keywords
@@ -177,7 +177,7 @@ def stream(keywords, name, stream_process, log):
             subprocess.run(command, stdout=subprocess.DEVNULL)
         command = [
             'twarc2', 'stream',
-            name + '-stream-' + str(stream_process['number']) + '.jsonl',
+            outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
         ]
         print_command(command)
         stream_process['process'] = subprocess.Popen(
@@ -191,8 +191,8 @@ def stream(keywords, name, stream_process, log):
     return log
 
 
-def write_log(name, log, stream_processes, search_processes):
-    with open(name + '-log.json', 'w') as f:
+def write_log(log, stream_processes, search_processes):
+    with open('log.json', 'w') as f:
         json.dump({
             'stream_processes': stream_processes,
             'search_processes': search_processes,
@@ -214,22 +214,22 @@ def write_log(name, log, stream_processes, search_processes):
         Defaults to 60.
     '''
 )
-@click.argument('path')
-def main(sleep, path):
-    name = path.split('.json')[0]
-    log, stream_process, search_processes = read_log(name)
+@click.argument('infile')
+@click.argument('outfile')
+def main(sleep, infile, outfile):
+    log, stream_process, search_processes = read_log()
     try:
         while True:
             search_processes, log = iterate(
-                name, sleep, stream_process, search_processes, log
+                infile, outfile, sleep, stream_process, search_processes, log
             )
     except KeyboardInterrupt:
         log = kill_stream(stream_process.copy(), log)
-        write_log(name, log, stream_process['number'], search_processes)
+        write_log(log, stream_process['number'], search_processes)
     except Exception:
         traceback.print_exc()
         log = kill_stream(stream_process.copy(), log)
-        write_log(name, log, stream_process['number'], search_processes)
+        write_log(log, stream_process['number'], search_processes)
 
 
 if __name__ == '__main__':

@@ -91,7 +91,7 @@ def is_inside(inner_window, outer_window):
     return True
 
 
-def iterate(infile, outfile, sleep, stream_process, search_processes, log):
+def iterate(infile, outfile, stream_process, search_processes, log):
     with open(infile) as query_file:
         query = convert_from_json(json.load(query_file))
 
@@ -110,7 +110,6 @@ def iterate(infile, outfile, sleep, stream_process, search_processes, log):
             )
             log_window['keywords'] |= query_window['keywords']
 
-    time.sleep(sleep)
     return search_processes, log
 
 
@@ -217,8 +216,9 @@ def main(sleep, infile, outfile):
         stream_process['process'] = run(command, logfile)
         while True:
             search_processes, log = iterate(
-                infile, outfile, sleep, stream_process, search_processes, log
+                infile, outfile, stream_process, search_processes, log
             )
+            time.sleep(sleep)
     except KeyboardInterrupt:
         finish(log, stream_process, search_processes)
     except Exception:

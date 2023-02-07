@@ -27,7 +27,7 @@ def finish(log, stream_process, search_processes):
     stream_process['end-time'] = now()
     if stream_process['start-time'] is None:
         stream_process['start-time'] = stream_process['end-time']
-    print('Killing old stream...')
+    print('\n' + now() + ' Killing old stream...')
     stream_process['process'].send_signal(SIGINT)
     with open('log.json', 'w') as f:
         json.dump({

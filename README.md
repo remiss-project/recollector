@@ -38,8 +38,8 @@ Cada finestra temporal ha de tenir tres atributs:
 - `end-time`: El temps final, en el mateix format que l'altre.
 - `keywords`: Una llista de mots clau que han de contenir els tweets a descarregar.
   La consulta final serà un `OR` de tots ells.
-  Si voleu fer consultes més complexes, com `(Prova1 AND Prova2) OR Prova3`,
-  podeu fer `["Prova1 AND Prova2", "Prova3"]`.
+  Si voleu fer consultes més complexes, com `(Prova1 Prova2) OR Prova3`,
+  podeu fer `["(Prova1 Prova2)", "Prova3"]`.
   Si voleu aprendre com fer consultes complexes,
   podeu consultar [la documentació de Twitter](https://developer.twitter.com/en/docs/twitter-api/tweets/search/integrate/build-a-query)
   o [una guia feta per Igor Brigadir](https://github.com/igorbrigadir/twitter-advanced-search/blob/master/README.md).

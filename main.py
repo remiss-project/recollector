@@ -165,30 +165,32 @@ def search(window, negative_keywords, outfile, search_processes):
 
 def stream(keywords, stream_process, log):
     old_stream_process = stream_process.copy()
-    old_stream_process['end-time'] = now()
-    if old_stream_process['start-time'] is None:
-        old_stream_process['start-time'] = old_stream_process['end-time']
-    del old_stream_process['process']
-    del old_stream_process['number']
-    log += [old_stream_process]
-
     logfile = 'stream-' + str(stream_process['number']) + '.log'
     new_keywords = keywords - old_stream_process['keywords']
     old_keywords = old_stream_process['keywords'] - keywords
+
     for keyword in new_keywords:
         command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
-        print_command(command)
-        with open(logfile, 'a') as f:
-            subprocess.run(command, stdout=f, stderr=f)
-    for keyword in old_keywords:
-        command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
         print_command(command)
         with open(logfile, 'a') as f:
             subprocess.run(command, stdout=f, stderr=f)
 
     stream_process['start-time'] = now()
     stream_process['keywords'] = keywords
-    return log
+
+    old_stream_process['end-time'] = stream_process['start-time']
+    if old_stream_process['start-time'] is None:
+        old_stream_process['start-time'] = old_stream_process['end-time']
+    del old_stream_process['process']
+    del old_stream_process['number']
+
+    for keyword in old_keywords:
+        command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
+        print_command(command)
+        with open(logfile, 'a') as f:
+            subprocess.run(command, stdout=f, stderr=f)
+
+    return log + [old_stream_process]
 
 
 def write_log(log, stream_processes, search_processes):

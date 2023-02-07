@@ -54,15 +54,6 @@ def get_empty_query(times):
     ]
 
 
-def get_now_keywords(query):
-    now_keywords = set()
-    for window in query:
-        if window['start-time'] <= now():
-            if window['end-time'] >= now():
-                now_keywords |= window['keywords']
-    return now_keywords
-
-
 def get_past_times(query):
     start_times = [window['start-time'] for window in query]
     end_times = [window['end-time'] for window in query]
@@ -104,7 +95,10 @@ def iterate(infile, outfile, sleep, stream_process, search_processes, log):
     with open(infile) as query_file:
         query = convert_from_json(json.load(query_file))
 
-    now_keywords = get_now_keywords(query)
+    now_keywords = {
+        keyword for window in query for keyword in window['keywords']
+        if window['start-time'] <= now() and window['end-time'] >= now()
+    }
     if now_keywords != stream_process['keywords']:
         log = stream(now_keywords, stream_process, log)
 

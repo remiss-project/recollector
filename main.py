@@ -149,7 +149,7 @@ def search(window, negative_keywords, outfile, search_processes):
         query = '(' + query + ') -(' + negative_query + ')'
     query = '"' + query + '"'
     command = [
-        'twarc2', 'search', '--hide-progress', '--archive',
+        'twarc2', 'search', '--archive',
         '--start-time', window['start-time'], '--end-time', window['end-time'],
         query, outfile + 'search-' + str(search_processes) + '.jsonl'
     ]
@@ -158,7 +158,8 @@ def search(window, negative_keywords, outfile, search_processes):
     if wait_until > datetime.utcnow():
         time.sleep((wait_until - datetime.utcnow()).seconds + 1)
     print_command(command)
-    subprocess.Popen(command)
+    with open('search-' + str(search_processes) + '.log', 'a') as f:
+        subprocess.Popen(command, stdout=f, stderr=f)
     return search_processes
 
 
@@ -168,21 +169,25 @@ def stream(keywords, outfile, stream_process, log):
     stream_process['keywords'] = keywords
     if len(keywords) > 0:
         stream_process['number'] += 1
+        logfile = 'stream-' + str(stream_process['number']) + '.log'
         command = ['twarc2', 'stream-rules', 'delete-all']
         print_command(command)
-        subprocess.run(command, stdout=subprocess.DEVNULL)
+        with open(logfile, 'a') as f:
+            subprocess.run(command, stdout=f, stderr=f)
         for keyword in keywords:
             command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
             print_command(command)
-            subprocess.run(command, stdout=subprocess.DEVNULL)
+            with open(logfile, 'a') as f:
+                subprocess.run(command, stdout=f, stderr=f)
         command = [
             'twarc2', 'stream',
             outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
         ]
         print_command(command)
-        stream_process['process'] = subprocess.Popen(
-            command, stderr=subprocess.DEVNULL
-        )
+        with open(logfile, 'a') as f:
+            stream_process['process'] = subprocess.Popen(
+                command, stdout=f, stderr=f
+            )
         stream_process['start-time'] = now()
     else:
         stream_process['process'] = None

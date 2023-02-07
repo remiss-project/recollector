@@ -149,7 +149,7 @@ def search(window, negative_keywords, outfile, search_processes):
         query = '(' + query + ') -(' + negative_query + ')'
     query = '"' + query + '"'
     command = [
-        'twarc2', 'search', '--archive',
+        'twarc2', 'search', '--hide-progress', '--archive',
         '--start-time', window['start-time'], '--end-time', window['end-time'],
         query, outfile + 'search-' + str(search_processes) + '.jsonl'
     ]

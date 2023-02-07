@@ -143,10 +143,10 @@ def read_log():
 
 def search(window, negative_keywords, outfile, search_processes):
     search_processes += 1
-    query = '(' + ') OR ('.join(window['keywords']) + ')'
+    query = ' OR '.join(window['keywords'])
     if len(negative_keywords) > 0:
-        negative_query = '(' + ') OR ('.join(negative_keywords) + ')'
-        query = '(' + query + ') AND NOT (' + negative_query + ')'
+        negative_query = ' OR '.join(negative_keywords)
+        query = '(' + query + ') -(' + negative_query + ')'
     query = '"' + query + '"'
     command = [
         'twarc2', 'search', '--archive',

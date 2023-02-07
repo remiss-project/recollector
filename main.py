@@ -23,6 +23,26 @@ def convert_from_json(query):
     ]
 
 
+def finish(log, stream_process, search_processes):
+    stream_process['end-time'] = now()
+    if stream_process['start-time'] is None:
+        stream_process['start-time'] = stream_process['end-time']
+    print('Killing old stream...')
+    stream_process['process'].send_signal(SIGINT)
+    with open('log.json', 'w') as f:
+        json.dump({
+            'stream_processes': stream_process['number'],
+            'search_processes': search_processes,
+            'log': [
+                {
+                    'start-time': window['start-time'],
+                    'end-time': window['end-time'],
+                    'keywords': list(window['keywords'])
+                } for window in log + [stream_process]
+            ]
+        }, f)
+
+
 def get_empty_query(times):
     return [
         {
@@ -98,18 +118,6 @@ def iterate(infile, outfile, sleep, stream_process, search_processes, log):
 
     time.sleep(sleep)
     return search_processes, log
-
-
-def kill_stream(stream_process, log):
-    stream_process['end-time'] = now()
-    if len(stream_process['keywords']) > 0:
-        print('Killing old stream...')
-        stream_process['process'].send_signal(SIGINT)
-    else:
-        stream_process['start-time'] = stream_process['end-time']
-    del stream_process['process']
-    del stream_process['number']
-    return log + [stream_process]
 
 
 def now():
@@ -192,21 +200,6 @@ def stream(keywords, stream_process, log):
     return log + [old_stream_process]
 
 
-def write_log(log, stream_processes, search_processes):
-    with open('log.json', 'w') as f:
-        json.dump({
-            'stream_processes': stream_processes,
-            'search_processes': search_processes,
-            'log': [
-                {
-                    'start-time': window['start-time'],
-                    'end-time': window['end-time'],
-                    'keywords': list(window['keywords'])
-                } for window in log
-            ]
-        }, f)
-
-
 @click.command()
 @click.option(
     '--sleep', default=60,
@@ -235,12 +228,10 @@ def main(sleep, infile, outfile):
                 infile, outfile, sleep, stream_process, search_processes, log
             )
     except KeyboardInterrupt:
-        log = kill_stream(stream_process.copy(), log)
-        write_log(log, stream_process['number'], search_processes)
+        finish(log, stream_process, search_processes)
     except Exception:
         traceback.print_exc()
-        log = kill_stream(stream_process.copy(), log)
-        write_log(log, stream_process['number'], search_processes)
+        finish(log, stream_process, search_processes)
 
 
 if __name__ == '__main__':

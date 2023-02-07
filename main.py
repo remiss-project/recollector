@@ -184,8 +184,6 @@ def stream(keywords, stream_process, log):
     old_stream_process['end-time'] = stream_process['start-time']
     if old_stream_process['start-time'] is None:
         old_stream_process['start-time'] = old_stream_process['end-time']
-    del old_stream_process['process']
-    del old_stream_process['number']
 
     for keyword in old_keywords:
         command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']

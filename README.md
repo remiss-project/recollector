@@ -86,6 +86,9 @@ python3 main.py config.json results_ --sleep 30
 Per aturar l'execució, podeu fer CTRL+C.
 Si teniu una consulta Stream en execució, s'aturarà.
 Les consultes Search s'aturen elles soles quan han recollit tots els tweets.
+En aturar l'execució es crea un fitxer `log.json`.
+Si voleu reprendre-la sense tornar a descarregar allò que ja heu descarregat,
+només cal que mantingueu aquest fitxer al directori on executeu el codi.
 
 ## FAQ
 

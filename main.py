@@ -129,6 +129,8 @@ def read_log():
     if isfile('log.json'):
         with open('log.json') as f:
             log = json.load(f)
+            assert log['stream_processes'] >= 0
+            assert log['search_processes'] >= 0
     else:
         log = {
             'stream_processes': 0,

@@ -212,6 +212,7 @@ def stream(keywords, stream_process, log):
 @click.argument('infile')
 @click.argument('outfile')
 def main(sleep, infile, outfile):
+    assert sleep > 0
     if '/' in outfile:
         out_directory = '/'.join(outfile.split('/')[:-1])
         assert isdir(out_directory)

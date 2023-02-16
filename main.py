@@ -14,13 +14,16 @@ def add_seconds(time):
 
 
 def convert_from_json(query):
-    return [
+    query = [
         {
             'start-time': add_seconds(window['start-time']),
             'end-time': add_seconds(window['end-time']),
             'keywords': set(window['keywords'])
         } for window in query
     ]
+    assert all([window['end-time'] > window['start-time'] for window in query])
+    assert all([type(keyword) == str for win in query for keyword in win])
+    return query
 
 
 def finish(log, stream_process, search_processes):
@@ -92,8 +95,13 @@ def is_inside(inner_window, outer_window):
 
 
 def iterate(infile, outfile, stream_process, search_processes, log):
-    with open(infile) as query_file:
-        query = convert_from_json(json.load(query_file))
+    try:
+        with open(infile) as query_file:
+            query = convert_from_json(json.load(query_file))
+    except Exception:
+        traceback.print_exc()
+        print('Error reading your configuration file. Please correct it.')
+        return search_processes, log
 
     now_keywords = {
         keyword for window in query for keyword in window['keywords']

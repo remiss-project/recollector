@@ -3,7 +3,7 @@ import subprocess
 import time
 import traceback
 from datetime import datetime, timedelta
-from os.path import isfile
+from os.path import isfile, isdir
 from signal import SIGINT
 
 import click
@@ -202,6 +202,9 @@ def stream(keywords, stream_process, log):
 @click.argument('infile')
 @click.argument('outfile')
 def main(sleep, infile, outfile):
+    if '/' in outfile:
+        out_directory = '/'.join(outfile.split('/')[:-1])
+        assert isdir(out_directory)
     log, stream_process, search_processes = read_log()
 
     stream_process['number'] += 1

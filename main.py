@@ -21,7 +21,7 @@ def convert_from_json(query):
             'keywords': set(window['keywords'])
         } for window in query
     ]
-    assert all([window['end-time'] > window['start-time'] for window in query])
+    assert all([window['end-time'] >= window['start-time'] for window in query])
     assert all([type(keyword) == str for win in query for keyword in win])
     return query
 

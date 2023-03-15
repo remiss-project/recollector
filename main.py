@@ -163,7 +163,6 @@ def search(window, negative_keywords, outfile, search_processes):
     if len(negative_keywords) > 0:
         negative_query = ' OR '.join(negative_keywords)
         query = '(' + query + ') -(' + negative_query + ')'
-    query = '"' + query + '"'
     command = [
         'twarc2', 'search', '--archive',
         '--start-time', window['start-time'], '--end-time', window['end-time'],
@@ -184,7 +183,7 @@ def stream(keywords, stream_process, log):
     old_keywords = old_stream_process['keywords'] - keywords
 
     for keyword in new_keywords:
-        command = ['twarc2', 'stream-rules', 'add', '"' + keyword + '"']
+        command = ['twarc2', 'stream-rules', 'add', keyword]
         run(command, logfile, time=True)
 
     stream_process['start-time'] = now()
@@ -195,7 +194,7 @@ def stream(keywords, stream_process, log):
         old_stream_process['start-time'] = old_stream_process['end-time']
 
     for keyword in old_keywords:
-        command = ['twarc2', 'stream-rules', 'delete', '"' + keyword + '"']
+        command = ['twarc2', 'stream-rules', 'delete', keyword]
         run(command, logfile, time=True)
 
     return log + [old_stream_process]

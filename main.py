@@ -148,12 +148,15 @@ def read_log():
     return log, stream_process, search_processes
 
 
-def run(command, outfile, time=False):
+def run(command, outfile, time=False, wait=True):
     if time:
         print(now(), end=' ')
     print(' '.join(command))
     with open(outfile, 'a') as f:
-        process = subprocess.Popen(command, stdout=f, stderr=f)
+        if wait:
+            process = subprocess.run(command, stdout=f, stderr=f)
+        else:
+            process = subprocess.Popen(command, stdout=f, stderr=f)
     return process
 
 
@@ -172,7 +175,7 @@ def search(window, negative_keywords, outfile, search_processes):
     wait_until = end_time + timedelta(seconds=10)
     if wait_until > datetime.utcnow():
         time.sleep((wait_until - datetime.utcnow()).seconds + 1)
-    run(command, 'search-' + str(search_processes) + '.log')
+    run(command, 'search-' + str(search_processes) + '.log', wait=False)
     return search_processes
 
 
@@ -226,7 +229,7 @@ def main(sleep, infile, outfile):
             'twarc2', 'stream',
             outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
         ]
-        stream_process['process'] = run(command, logfile)
+        stream_process['process'] = run(command, logfile, wait=False)
         while True:
             search_processes, log = iterate(
                 infile, outfile, stream_process, search_processes, log

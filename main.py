@@ -4,6 +4,7 @@ import time
 import traceback
 from datetime import datetime, timedelta
 from os.path import isfile, isdir
+from os import setpgrp
 from signal import SIGINT
 
 import click
@@ -160,7 +161,9 @@ def run(command, outfile, time=False, wait=True):
         if wait:
             process = subprocess.run(command, stdout=f, stderr=f)
         else:
-            process = subprocess.Popen(command, stdout=f, stderr=f)
+            process = subprocess.Popen(
+                command, stdout=f, stderr=f, preexec_fn=setpgrp
+            )
     return process
 
 

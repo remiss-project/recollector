@@ -26,12 +26,14 @@ def convert_from_json(query):
     return query
 
 
-def finish(log, stream_process, search_processes):
-    stream_process['end-time'] = now()
-    if stream_process['start-time'] is None:
-        stream_process['start-time'] = stream_process['end-time']
-    print('\n' + now() + ' Killing old stream...')
-    stream_process['process'].send_signal(SIGINT)
+def finish(log, stream_process, search_processes, use_stream):
+    if use_stream:
+        stream_process['end-time'] = now()
+        if stream_process['start-time'] is None:
+            stream_process['start-time'] = stream_process['end-time']
+        print('\n' + now() + ' Killing old stream...')
+        stream_process['process'].send_signal(SIGINT)
+        log += [stream_process]
     with open('log.json', 'w') as f:
         json.dump({
             'stream_processes': stream_process['number'],
@@ -41,7 +43,7 @@ def finish(log, stream_process, search_processes):
                     'start-time': window['start-time'],
                     'end-time': window['end-time'],
                     'keywords': list(window['keywords'])
-                } for window in log + [stream_process]
+                } for window in log
             ]
         }, f)
 
@@ -94,7 +96,9 @@ def is_inside(inner_window, outer_window):
     return True
 
 
-def iterate(infile, outfile, stream_process, search_processes, log):
+def iterate(
+            infile, outfile, stream_process, search_processes, log, use_stream
+        ):
     try:
         with open(infile) as query_file:
             query = convert_from_json(json.load(query_file))
@@ -107,7 +111,7 @@ def iterate(infile, outfile, stream_process, search_processes, log):
         keyword for window in query for keyword in window['keywords']
         if window['start-time'] <= now() and window['end-time'] >= now()
     }
-    if now_keywords != stream_process['keywords']:
+    if use_stream and now_keywords != stream_process['keywords']:
         log = stream(now_keywords, stream_process, log)
 
     query, log = get_standardized_queries(query, log)
@@ -211,35 +215,43 @@ def stream(keywords, stream_process, log):
         Defaults to 60.
     '''
 )
+@click.option(
+    '--stream/--no-stream', 'use_stream', default=True,
+    help='''
+    '''
+)
 @click.argument('infile')
 @click.argument('outfile')
-def main(sleep, infile, outfile):
+def main(sleep, use_stream, infile, outfile):
     assert sleep > 0
     if '/' in outfile:
         out_directory = '/'.join(outfile.split('/')[:-1])
         assert isdir(out_directory)
     log, stream_process, search_processes = read_log()
 
-    stream_process['number'] += 1
-    logfile = 'stream-' + str(stream_process['number']) + '.log'
-    run(['twarc2', 'stream-rules', 'delete-all'], logfile)
+    if use_stream:
+        stream_process['number'] += 1
+        logfile = 'stream-' + str(stream_process['number']) + '.log'
+        run(['twarc2', 'stream-rules', 'delete-all'], logfile)
 
     try:
-        command = [
-            'twarc2', 'stream',
-            outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
-        ]
-        stream_process['process'] = run(command, logfile, wait=False)
+        if use_stream:
+            command = [
+                'twarc2', 'stream',
+                outfile + 'stream-' + str(stream_process['number']) + '.jsonl',
+            ]
+            stream_process['process'] = run(command, logfile, wait=False)
         while True:
             search_processes, log = iterate(
-                infile, outfile, stream_process, search_processes, log
+                infile, outfile, stream_process, search_processes, log,
+                use_stream
             )
             time.sleep(sleep)
     except KeyboardInterrupt:
-        finish(log, stream_process, search_processes)
+        finish(log, stream_process, search_processes, use_stream)
     except Exception:
         traceback.print_exc()
-        finish(log, stream_process, search_processes)
+        finish(log, stream_process, search_processes, use_stream)
 
 
 if __name__ == '__main__':

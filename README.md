@@ -90,6 +90,14 @@ En aturar l'execució es crea un fitxer `log.json`.
 Si voleu reprendre-la sense tornar a descarregar allò que ja heu descarregat,
 només cal que mantingueu aquest fitxer al directori on executeu el codi.
 
+Twitter només pot executar una consulta Stream alhora.
+Per tant, per tal de poder fer dues consultes alhora al recol·lector,
+cal que almenys una d'elles no faci cap consulta Stream.
+En aquest cas, feu:
+```
+python3 main.py config.json results_ --no-stream
+```
+
 ## FAQ
 
 1. **Al fitxer de configuració, cal que les finestres temporals siguin disjuntes?**

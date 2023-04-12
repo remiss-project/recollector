@@ -221,6 +221,7 @@ def stream(keywords, stream_process, log):
 @click.option(
     '--stream/--no-stream', 'use_stream', default=True,
     help='''
+        Whether to enable stream queries.
     '''
 )
 @click.argument('infile')

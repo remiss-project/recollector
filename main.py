@@ -15,6 +15,8 @@ def add_seconds(time):
 
 
 def convert_from_json(query):
+    if query == []:
+        return query
     query = [
         {
             'start-time': add_seconds(window['start-time']),
@@ -31,6 +33,15 @@ def convert_from_json(query):
         for window in query
         for keyword in window['keywords']
     ]), 'A keyword is not a string'
+    longest_query = max([
+        ' OR '.join([keyword for keyword in window['keywords']])
+        for window in query
+    ], key=len)
+    assert len(longest_query) < 1023, (
+        'A query has length ' + str(len(longest_query))
+        + ' while the maximum is 1022. The query is the following:\n'
+        + longest_query
+    )
     return query
 
 

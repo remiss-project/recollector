@@ -223,8 +223,8 @@ def stream(keywords, stream_process, log):
         Whether to enable stream queries.
     '''
 )
-@click.argument('infile')
-@click.argument('outfile')
+@click.argument('infile', type=click.Path())
+@click.argument('outfile', type=click.Path())
 def main(sleep, use_stream, infile, outfile):
     assert sleep > 0
     if '/' in outfile:

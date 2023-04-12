@@ -29,7 +29,7 @@ def convert_from_json(query):
     assert all([
         type(keyword) == str
         for window in query
-        for keyword in window
+        for keyword in window['keywords']
     ])
     return query
 

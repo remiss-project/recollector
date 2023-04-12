@@ -212,14 +212,13 @@ def stream(keywords, stream_process, log):
 
 @click.command()
 @click.option(
-    '--sleep', default=60,
+    '--sleep', default=60, show_default=True,
     help='''
         Seconds to sleep between each step of reading the configuration.
-        Defaults to 60.
     '''
 )
 @click.option(
-    '--stream/--no-stream', 'use_stream', default=True,
+    '--stream/--no-stream', 'use_stream', default=True, show_default=True,
     help='''
         Whether to enable stream queries.
     '''

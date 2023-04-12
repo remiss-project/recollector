@@ -25,12 +25,12 @@ def convert_from_json(query):
     assert all([
         window['end-time'] >= window['start-time']
         for window in query
-    ])
+    ]), 'An end-time is before a start-time'
     assert all([
         type(keyword) == str
         for window in query
         for keyword in window['keywords']
-    ])
+    ]), 'A keyword is not a string'
     return query
 
 
@@ -233,10 +233,10 @@ def stream(keywords, stream_process, log):
 @click.argument('infile', type=click.Path())
 @click.argument('outfile', type=click.Path())
 def main(sleep, use_stream, infile, outfile):
-    assert sleep > 0
+    assert sleep > 0, 'sleep is not positive'
     if '/' in outfile:
         out_directory = '/'.join(outfile.split('/')[:-1])
-        assert isdir(out_directory)
+        assert isdir(out_directory), out_directory + ' is not a directory'
     log, stream_process, search_processes = read_log()
 
     if use_stream:

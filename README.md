@@ -185,3 +185,22 @@ python3 main.py config.json results_ --no-stream
    Així doncs, si s'ha descarregat parcialment, partiu la consulta com hem dit.
    Si s'ha descarregat, no esborreu el mot original i senzillament afegiu la versió nova.
    Si no s'ha descarregat, modifiqueu tranquil·lament el mot.
+
+6. **Què passa si se m'acaba la quota de tweets mensuals que puc descarregar?**
+
+   En el cas de les consultes Search podeu estar tranquils,
+   perquè senzillament es pausaran sense que salti cap error.
+   Quan la quota es renovi, continuarà la descàrrega sense problemes.
+
+   En el cas de les consultes Stream és més delicat,
+   perquè també es pausaran sense que salti cap error.
+   Però això, en el cas de les Stream,
+   vol dir que no es descarregaran els tweets publicats entre l'acabament de la quota i la renovació.
+
+   Això és un problema que el recol·lector no pot detectar.
+   Per tant, si veieu que se us ha acabat la quota,
+   haureu d'aturar la consulta Stream,
+   mirar quin és la data de l'últim tweet descarregat
+   i corregir el log (`log.json`) per fer que la finestra associada a l'Stream acabi en aquesta data i no quan l'heu aturat manualment.
+   Llavors, quan la quota es renovi, podeu reexecutar el recol·lector
+   i us descarregarà el que falti amb una consulta Search.

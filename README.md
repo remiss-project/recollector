@@ -204,3 +204,6 @@ python3 main.py config.json results_ --no-stream
    i corregir el log (`log.json`) per fer que la finestra associada a l'Stream acabi en aquesta data i no quan l'heu aturat manualment.
    Llavors, quan la quota es renovi, podeu reexecutar el recol·lector
    i us descarregarà el que falti amb una consulta Search.
+## Autors
+- [Joan Massachs](https://github.com/JoanMassachs)
+
